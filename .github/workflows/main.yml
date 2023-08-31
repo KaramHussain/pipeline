@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Build Docker image
         run: |
-          sudo docker build -t ntuimage /path/to/your/docker/project
+          sudo docker build -t ntuimage .
 
       - name: Deploy to AWS VM
         run: |
