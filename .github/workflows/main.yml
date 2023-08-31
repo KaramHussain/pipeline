@@ -17,9 +17,6 @@ jobs:
           sudo docker save -o ntuimage.tar ntuimage
           mv ntuimage.tar $GITHUB_WORKSPACE/ntuimage.tar
 
-      - name: Move Docker image to repository root
-        run: mv $GITHUB_WORKSPACE/ntuimage.tar $GITHUB_WORKSPACE/pipeline/
-
       - name: Deploy to AWS VM
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/id_rsa
@@ -35,7 +32,7 @@ jobs:
           fi
 
           # Copy Docker image to VM and run a new container
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $GITHUB_WORKSPACE/pipeline/ntuimage.tar ubuntu@3.86.182.157:~
+          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $GITHUB_WORKSPACE/ntuimage.tar ubuntu@3.86.182.157:~
           ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
             sudo docker load -i ntuimage.tar &&
             sudo docker run -d -p 3000:3000 --name ntuContainer ntuimage
