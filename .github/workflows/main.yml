@@ -1,41 +1,28 @@
+name: Push Docker image to Docker Hub
+
 on:
   push:
     branches:
       - master
 
 jobs:
-  deploy:
+  push_to_registry:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Check out the repo
         uses: actions/checkout@v2
-
-      - name: Build Docker image
-        run: |
-          sudo docker build -t ntuimage .
-          sudo docker save -o ntuimage.tar ntuimage
-          mv ntuimage.tar $GITHUB_WORKSPACE/ntuimage.tar
-
-      - name: Deploy to AWS VM
-        run: |
-          echo "$SSH_PRIVATE_KEY" > /tmp/id_rsa
-          chmod 600 /tmp/id_rsa
-
-          # Check if the container exists
-          if ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 "sudo docker inspect -f '{{.State.Running}}' ntuContainer"; then
-            # Stop and remove the existing container
-            ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
-              sudo docker stop ntuContainer &&
-              sudo docker rm ntuContainer
-            '
-          fi
-
-          # Copy Docker image to VM and run a new container
-          scp -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $GITHUB_WORKSPACE/ntuimage.tar ubuntu@3.86.182.157:~
-          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
-            sudo docker load -i ntuimage.tar &&
-            sudo docker run -d -p 3000:3000 --name ntuContainer ntuimage
-          '
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.pipeline }}
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/testing:latest
