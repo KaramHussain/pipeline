@@ -19,9 +19,19 @@ jobs:
         run: |
           echo "$SSH_PRIVATE_KEY" > /tmp/id_rsa
           chmod 600 /tmp/id_rsa
+      
+          # Check if the container exists
+          if ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 "sudo docker inspect -f '{{.State.Running}}' ntuContainer"; then
+            # Stop and remove the existing container
+            ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
+              sudo docker stop ntuContainer &&
+              sudo docker rm ntuContainer
+            '
+          fi
+      
+          # Create a new container
           ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
-            sudo docker stop ntuContainer || true &&
-            sudo docker rm ntuContainer || true &&
-            sudo docker run -d -p 3000:3000 --name ntuContainer ntuimage'
+            sudo docker run -d -p 3000:3000 --name ntuContainer ntuimage
+          '
         env:
           SSH_PRIVATE_KEY: ${{ secrets.pipeline }}
