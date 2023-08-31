@@ -8,8 +8,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Build Docker image
         run: |
+          cd /
           sudo docker build -t ntuimage .
 
       - name: Deploy to AWS VM
