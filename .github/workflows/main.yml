@@ -26,3 +26,22 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/testing:latest
+      - name: Deploy to AWS VM
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+
+          # SSH into the AWS VM
+          ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@3.86.182.157 '
+            # Check if the container already exists
+            if sudo docker inspect -f {{.State.Running}} ntuContainer &>/dev/null; then
+              # Stop and remove the existing container
+              sudo docker stop ntuContainer && sudo docker rm ntuContainer
+            fi
+
+            # Pull and run the Docker image from the repository
+            sudo docker pull vgopu/testing:latest
+            sudo docker run -d -p 3000:3000 --name ntuContainer vgopu/testing:latest
+          '
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.pipeline }}
