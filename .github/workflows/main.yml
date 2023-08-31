@@ -13,7 +13,6 @@ jobs:
 
       - name: Build Docker image
         run: |
-          cd /
           sudo docker build -t ntuimage .
 
       - name: Deploy to AWS VM
